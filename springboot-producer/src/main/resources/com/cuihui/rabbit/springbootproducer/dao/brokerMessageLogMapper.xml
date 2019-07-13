@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cuihui.rabbit.springbootproducer.dao.IBrokerMessageLogDao">
+    <!-- 新增消息日志 -->
+    <insert id="addBrokerMessageLog">
+        INSERT INTO `broker_message_log` (
+          `message_id`,
+          `message`,
+          `try_count`,
+          `status`,
+          `next_retry`,
+          `create_time`,
+          `update_time`
+        )
+        VALUES
+          (
+            #{messageLog.messageId,jdbcType=VARCHAR},
+            #{messageLog.message,jdbcType=VARCHAR},
+            #{messageLog.tryCount,jdbcType=INTEGER},
+            #{messageLog.status,jdbcType=VARCHAR},
+            #{messageLog.nextRetry,jdbcType=TIMESTAMP},
+            #{messageLog.createTime,jdbcType=TIMESTAMP},
+            #{messageLog.updateTime,jdbcType=TIMESTAMP}
+          )
+    </insert>
+
+    <!-- 消息投递成功修改状态 -->
+    <update id="changeBrokerMessageLogStatus">
+        UPDATE
+          `broker_message_log` bml
+        SET
+          bml.`status` = #{status,jdbcType=VARCHAR},
+          bml.`update_time` = #{updateTime,jdbcType=TIMESTAMP}
+        WHERE bml.`message_id` = #{messageId,jdbcType=VARCHAR}
+    </update>
+
+    <!-- 消息投递成功修改状态 -->
+    <select id="queryStatus0AndTimeoutMessage" resultType="com.cuihui.rabbit.springbootproducer.entity.BrokerMessageLog">
+        SELECT
+          message_id messageId,
+          message,
+          try_count tryCount,
+          `status`,
+          next_retry nextRetry,
+          create_time createTime,
+          update_time updateTime
+        FROM
+          `broker_message_log`
+        WHERE `status` = '0'
+          AND next_retry <![CDATA[<=]]> SYSDATE()
+    </select>
+
+    <!-- 更新重投次数+1 -->
+    <update id="updateTryCount">
+        UPDATE
+          `broker_message_log`
+        SET
+          try_count = try_count + 1,
+          update_time = #{updateTime,jdbcType=TIMESTAMP}
+        WHERE message_id = #{messageId,jdbcType=VARCHAR}
+    </update>
+</mapper>
